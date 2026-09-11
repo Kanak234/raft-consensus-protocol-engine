@@ -27,3 +27,9 @@ jobs:
 
       - name: Run Microbenchmark
         run: java -jar target/raft-consensus-engine.jar --bench 1000
+
+      - name: Build Docker Image
+        run: docker build -t raft-consensus-engine:test .
+
+      - name: Smoke Test Docker Image
+        run: docker run --rm raft-consensus-engine:test --help
