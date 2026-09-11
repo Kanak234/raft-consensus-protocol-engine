@@ -32,6 +32,15 @@ public class RaftCluster {
     }
 
     public static RaftCluster create(int numNodes, long seed) {
+        return create(numNodes, seed, 150, 300, 50);
+    }
+
+    public static RaftCluster create(int numNodes, long seed,
+                                     long minElectionTimeoutMs, long maxElectionTimeoutMs,
+                                     long heartbeatIntervalMs) {
+        if (numNodes <= 0) {
+            throw new IllegalArgumentException("numNodes must be positive: " + numNodes);
+        }
         DeterministicNetwork net = new DeterministicNetwork();
         RaftCluster cluster = new RaftCluster(net);
 
@@ -49,7 +58,7 @@ public class RaftCluster {
                     id, peers, net,
                     new KeyValueStateMachine(),
                     new RaftLog(),
-                    150, 300, 50,
+                    minElectionTimeoutMs, maxElectionTimeoutMs, heartbeatIntervalMs,
                     seed + i * 1000L
             );
             net.registerNode(id, node);

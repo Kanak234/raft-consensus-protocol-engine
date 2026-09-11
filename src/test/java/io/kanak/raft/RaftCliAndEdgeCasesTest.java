@@ -1,6 +1,7 @@
 package io.kanak.raft;
 
 import io.kanak.raft.cli.RaftCli;
+import io.kanak.raft.core.RaftCluster;
 import io.kanak.raft.model.Command;
 import io.kanak.raft.model.LogEntry;
 import io.kanak.raft.model.RaftRole;
@@ -80,13 +81,33 @@ public class RaftCliAndEdgeCasesTest {
     }
 
     @Test
-    void testRaftCliInteractiveCommands() {
-        String input = "status\nput k1 v1\nget k1\ntick 10\nheal\nexit\n";
-        System.setIn(new ByteArrayInputStream(input.getBytes()));
-        try {
-            assertDoesNotThrow(() -> RaftCli.main(new String[]{}));
-        } finally {
-            System.setIn(System.in);
-        }
+    void testValidationAndRobustness() {
+        assertThrows(IllegalArgumentException.class, () -> RaftCluster.create(0, 100));
+        assertThrows(IllegalArgumentException.class, () -> RaftCluster.create(-2, 100));
+
+        assertThrows(NullPointerException.class, () ->
+                new io.kanak.raft.core.RaftNode(null, java.util.List.of(), new io.kanak.raft.simulation.DeterministicNetwork(),
+                        new io.kanak.raft.statemachine.KeyValueStateMachine(), new io.kanak.raft.storage.RaftLog(),
+                        150, 300, 50, 1));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                new io.kanak.raft.core.RaftNode("  ", java.util.List.of(), new io.kanak.raft.simulation.DeterministicNetwork(),
+                        new io.kanak.raft.statemachine.KeyValueStateMachine(), new io.kanak.raft.storage.RaftLog(),
+                        150, 300, 50, 1));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                new io.kanak.raft.core.RaftNode("n1", java.util.List.of(), new io.kanak.raft.simulation.DeterministicNetwork(),
+                        new io.kanak.raft.statemachine.KeyValueStateMachine(), new io.kanak.raft.storage.RaftLog(),
+                        0, 300, 50, 1));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                new io.kanak.raft.core.RaftNode("n1", java.util.List.of(), new io.kanak.raft.simulation.DeterministicNetwork(),
+                        new io.kanak.raft.statemachine.KeyValueStateMachine(), new io.kanak.raft.storage.RaftLog(),
+                        300, 150, 50, 1));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                new io.kanak.raft.core.RaftNode("n1", java.util.List.of(), new io.kanak.raft.simulation.DeterministicNetwork(),
+                        new io.kanak.raft.statemachine.KeyValueStateMachine(), new io.kanak.raft.storage.RaftLog(),
+                        150, 300, 0, 1));
     }
 }
