@@ -3,9 +3,30 @@ target/
 *.jar
 *.war
 *.ear
+*.nar
+*.zip
+*.tar.gz
+dependency-reduced-pom.xml
+
+# Logs
 *.log
+
+# Environment & Local overrides
+.env
+.env.local
+*.env
+
+# IDEs & Editors
 .idea/
 *.iml
+.classpath
+.project
+.settings/
 .vscode/
-.DS_Store
 *.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
