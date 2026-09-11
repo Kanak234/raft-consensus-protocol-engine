@@ -76,6 +76,11 @@ public class RaftCli {
     }
 
     public static void main(String[] args) {
+        if (args.length > 0 && (args[0].equalsIgnoreCase("--help") || args[0].equalsIgnoreCase("-h"))) {
+            printHelp();
+            return;
+        }
+
         if (args.length > 0 && args[0].equalsIgnoreCase("--bench")) {
             int ops = args.length > 1 ? Integer.parseInt(args[1]) : 1000;
             runBenchmark(ops);
