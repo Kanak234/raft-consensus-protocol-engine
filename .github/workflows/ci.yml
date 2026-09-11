@@ -2,12 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master, prod-hardening ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, master ]
 
 jobs:
   build-and-test:
+    name: Build, Lint & Test (Java 21)
     runs-on: ubuntu-latest
 
     steps:
@@ -21,11 +22,8 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Compile and Run Invariant Tests
-        run: mvn clean test --batch-mode
-
-      - name: Package Shaded JAR
-        run: mvn package -DskipTests --batch-mode
+      - name: Compile and Verify Invariant Tests
+        run: mvn clean verify --batch-mode
 
       - name: Run Microbenchmark
         run: java -jar target/raft-consensus-engine.jar --bench 1000
