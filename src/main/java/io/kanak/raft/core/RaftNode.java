@@ -66,6 +66,24 @@ public class RaftNode implements RaftRpcHandler {
                     StateMachine stateMachine, RaftLog raftLog,
                     long minElectionTimeoutMs, long maxElectionTimeoutMs, long heartbeatIntervalMs,
                     long seed) {
+        java.util.Objects.requireNonNull(nodeId, "nodeId must not be null");
+        if (nodeId.isBlank()) {
+            throw new IllegalArgumentException("nodeId must not be blank");
+        }
+        java.util.Objects.requireNonNull(peers, "peers must not be null");
+        java.util.Objects.requireNonNull(transport, "transport must not be null");
+        java.util.Objects.requireNonNull(stateMachine, "stateMachine must not be null");
+        java.util.Objects.requireNonNull(raftLog, "raftLog must not be null");
+        if (minElectionTimeoutMs <= 0) {
+            throw new IllegalArgumentException("minElectionTimeoutMs must be positive: " + minElectionTimeoutMs);
+        }
+        if (maxElectionTimeoutMs < minElectionTimeoutMs) {
+            throw new IllegalArgumentException("maxElectionTimeoutMs must be >= minElectionTimeoutMs: " + maxElectionTimeoutMs);
+        }
+        if (heartbeatIntervalMs <= 0) {
+            throw new IllegalArgumentException("heartbeatIntervalMs must be positive: " + heartbeatIntervalMs);
+        }
+
         this.nodeId = nodeId;
         this.peers = new ArrayList<>(peers);
         this.transport = transport;

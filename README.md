@@ -177,6 +177,49 @@ raft-consensus-protocol-engine/
 
 ---
 
+## Limitations & Engineering Trade-Offs
+
+- **Discrete-Event Simulation Transport**: The protocol engine currently executes atop an in-memory discrete-event network simulator (`DeterministicNetwork`). While this enables cycle-accurate deterministic fault injection (asymmetric partitions, packet drops, clock skew), deploying across bare-metal physical servers requires implementing a real network transport adapter (e.g. Netty TCP or gRPC) against the `NetworkTransport` interface.
+- **In-Memory Volatile Storage**: Log entries, terms, and snapshots are stored in JVM memory (`RaftLog`). For survivability across complete node power failures in production environments, log entries must be flushed to a durable Write-Ahead Log (WAL) on disk via `FileChannel.force(true)` before acknowledging RPCs.
+- **Static Cluster Topology**: Dynamic cluster membership changes (§6 of the Raft dissertation, joint consensus) are not implemented; cluster membership is fixed at initialization time.
+- **Single-Threaded Simulation Loop**: Virtual clock advancement is coordinated via a discrete-event priority queue. High operation throughput reflects consensus rounds and state-machine transitions without physical OS socket overhead.
+
+---
+
+## Reproducible Benchmark Specifications
+
+All benchmark figures are reproducible using the shaded fat JAR on bare-metal hardware.
+
+### Testbed Environment
+- **CPU:** AMD Ryzen 5 5600H (6 Cores, 12 Threads @ 3.30 GHz base / 4.20 GHz boost, 16 MB L3 Cache)
+- **RAM:** 16 GB DDR4 3200 MT/s Dual-Channel
+- **OS:** Linux 7.0.0-31-generic x86_64
+- **JVM Runtime:** Eclipse Temurin OpenJDK 64-Bit Server VM (build 21.0.12.1+1-LTS)
+- **Target Commit SHA:** `59c82cb24e497a2724ab4e33f6c96acb35018191`
+
+### Reproducible Command
+```bash
+# Build shaded fat JAR
+mvn clean package -DskipTests
+
+# Execute 1,000-operation Raft consensus benchmark across 5-node cluster
+java -jar target/raft-consensus-engine.jar --bench 1000
+```
+
+### Measured Benchmark Output
+```text
+Starting Raft Consensus Benchmark (1000 operations)...
+Leader node1 elected in term 1
+Benchmark complete:
+  Committed: 1000 / 1000 operations
+  Elapsed Time: 1049.53 ms
+  Throughput: 952.8 ops/sec
+  Mean Latency: 1049.53 us/op
+```
+
+---
+
 ## License
 
 MIT License. Copyright (c) 2026 Kanak Prabhakar.
+

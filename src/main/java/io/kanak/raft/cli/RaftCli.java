@@ -76,15 +76,29 @@ public class RaftCli {
     }
 
     public static void main(String[] args) {
+        if (args.length > 0 && (args[0].equalsIgnoreCase("--help") || args[0].equalsIgnoreCase("-h"))) {
+            printHelp();
+            return;
+        }
+
         if (args.length > 0 && args[0].equalsIgnoreCase("--bench")) {
             int ops = args.length > 1 ? Integer.parseInt(args[1]) : 1000;
             runBenchmark(ops);
             return;
         }
 
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutting down Raft engine simulation...");
+        }));
+
+        int defaultNodes = getEnvInt("RAFT_CLUSTER_NODES_COUNT", 5);
+        long minTimeout = getEnvLong("RAFT_ELECTION_TIMEOUT_MIN_MS", 150L);
+        long maxTimeout = getEnvLong("RAFT_ELECTION_TIMEOUT_MAX_MS", 300L);
+        long heartbeat = getEnvLong("RAFT_HEARTBEAT_INTERVAL_MS", 50L);
+
         System.out.println("Raft Consensus Protocol Engine (Java 21 LTS)");
-        System.out.println("Type 'help' for commands. Initializing default 5-node cluster...");
-        cluster = RaftCluster.create(5, 12345);
+        System.out.printf("Type 'help' for commands. Initializing default %d-node cluster...%n", defaultNodes);
+        cluster = RaftCluster.create(defaultNodes, 12345, minTimeout, maxTimeout, heartbeat);
         cluster.tickUntil(c -> c.getLeader() != null, 2000, 20);
 
         RaftNode leader = cluster.getLeader();
@@ -203,5 +217,27 @@ public class RaftCli {
                 default -> System.out.println("Unknown command. Type 'help' for available commands.");
             }
         }
+    }
+
+    private static int getEnvInt(String name, int defaultValue) {
+        String val = System.getenv(name);
+        if (val != null && !val.isBlank()) {
+            try {
+                return Integer.parseInt(val.trim());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return defaultValue;
+    }
+
+    private static long getEnvLong(String name, long defaultValue) {
+        String val = System.getenv(name);
+        if (val != null && !val.isBlank()) {
+            try {
+                return Long.parseLong(val.trim());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return defaultValue;
     }
 }

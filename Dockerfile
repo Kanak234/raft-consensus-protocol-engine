@@ -16,7 +16,16 @@ LABEL org.opencontainers.image.source="https://github.com/Kanak234/raft-consensu
 LABEL org.opencontainers.image.description="Raft Consensus Protocol Engine in Java 21 LTS"
 
 WORKDIR /app
+
+RUN groupadd -r appgroup && useradd -r -g appgroup -d /app appuser
+
 COPY --from=builder /build/target/raft-consensus-engine.jar /app/raft-consensus-engine.jar
+
+RUN chown -R appuser:appgroup /app
+USER appuser
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD java -jar /app/raft-consensus-engine.jar --help || exit 1
 
 ENTRYPOINT ["java", "-jar", "/app/raft-consensus-engine.jar"]
 CMD ["--bench", "1000"]
